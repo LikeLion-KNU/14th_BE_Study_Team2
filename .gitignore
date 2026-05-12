@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+/src/test/java/com/example/community/auth/AuthServiceSignupTest.java
+/src/test/java/com/example/community/auth/AuthControllerSignupTest.java
+/src/test/java/com/example/community/auth/AuthServiceLoginTest.java

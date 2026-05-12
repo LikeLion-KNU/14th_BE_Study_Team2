@@ -76,4 +76,18 @@ public class User extends BaseTimeEntity {
                 || this.status == UserStatus.REJECTED
                 || this.status == UserStatus.BANNED;
     }
+
+    public void approve(LocalDateTime approvedAt) {
+        this.status = UserStatus.APPROVED;
+        this.approvedAt = approvedAt;
+    }
+
+    public void reject() {
+        this.status = UserStatus.REJECTED;
+        this.approvedAt = null;
+    }
+
+    public void ban() {
+        this.status = UserStatus.BANNED;
+    }
 }
