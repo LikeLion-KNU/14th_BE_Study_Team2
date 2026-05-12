@@ -40,3 +40,5 @@ out/
 /src/test/java/com/example/community/auth/AuthServiceLoginTest.java
 /src/test/java/com/example/community/auth/AuthControllerLoginTest.java
 /src/test/java/com/example/community/auth/JwtAuthenticationFilterTest.java
+/src/test/java/com/example/community/auth/AuthControllerLogoutTest.java
+/src/test/java/com/example/community/auth/AuthRepositorySmokeTest.java

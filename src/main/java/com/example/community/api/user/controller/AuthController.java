@@ -2,6 +2,7 @@ package com.example.community.api.user.controller;
 
 import com.example.community.api.user.dto.LoginRequest;
 import com.example.community.api.user.dto.LoginResponse;
+import com.example.community.api.user.dto.LogoutResponse;
 import com.example.community.api.user.dto.SignupRequest;
 import com.example.community.api.user.dto.SignupResponse;
 import com.example.community.api.user.service.AuthService;
@@ -34,4 +35,11 @@ public class AuthController {
         LoginResponse response = authService.login(request, ipAddress);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<LogoutResponse> logout() {
+        LogoutResponse response = authService.logout();
+        return ResponseEntity.ok(response);
+    }
+
 }

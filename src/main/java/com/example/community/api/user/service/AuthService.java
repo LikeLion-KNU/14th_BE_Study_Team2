@@ -15,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.community.api.user.dto.LogoutResponse;
+import com.example.community.security.util.SecurityUtil;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -103,6 +105,14 @@ public class AuthService {
         );
     }
 
+    public LogoutResponse logout() {
+        String sessionId = SecurityUtil.getCurrentSessionId();
+
+        activeSessionRepository.deleteBySessionId(sessionId);
+
+        return LogoutResponse.success();
+    }
+
     private void validatePassword(String password) {
         if (password == null || !PASSWORD_PATTERN.matcher(password).matches()) {
             throw new AuthException(
@@ -120,4 +130,6 @@ public class AuthService {
             );
         }
     }
+
+
 }
