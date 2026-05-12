@@ -33,4 +33,22 @@ public class ActiveSession {
 
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
+
+    public static ActiveSession create(
+            String sessionId,
+            User user,
+            String ipAddress,
+            LocalDateTime expiresAt
+    ) {
+        ActiveSession activeSession = new ActiveSession();
+        activeSession.sessionId = sessionId;
+        activeSession.user = user;
+        activeSession.ipAddress = ipAddress;
+        activeSession.expiresAt = expiresAt;
+        return activeSession;
+    }
+
+    public boolean isExpired(LocalDateTime now) {
+        return this.expiresAt.isBefore(now);
+    }
 }
