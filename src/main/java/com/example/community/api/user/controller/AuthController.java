@@ -1,8 +1,11 @@
 package com.example.community.api.user.controller;
 
+import com.example.community.api.user.dto.LoginRequest;
+import com.example.community.api.user.dto.LoginResponse;
 import com.example.community.api.user.dto.SignupRequest;
 import com.example.community.api.user.dto.SignupResponse;
 import com.example.community.api.user.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,5 +23,15 @@ public class AuthController {
     public ResponseEntity<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
         SignupResponse response = authService.signup(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpServletRequest
+    ) {
+        String ipAddress = httpServletRequest.getRemoteAddr();
+        LoginResponse response = authService.login(request, ipAddress);
+        return ResponseEntity.ok(response);
     }
 }
