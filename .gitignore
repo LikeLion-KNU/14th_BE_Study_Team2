@@ -39,3 +39,4 @@ out/
 /src/test/java/com/example/community/auth/AuthControllerSignupTest.java
 /src/test/java/com/example/community/auth/AuthServiceLoginTest.java
 /src/test/java/com/example/community/auth/AuthControllerLoginTest.java
+/src/test/java/com/example/community/auth/JwtAuthenticationFilterTest.java
