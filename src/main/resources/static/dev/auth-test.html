@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Auth One Page Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 28px;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        h1 {
+            margin-bottom: 6px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 430px 1fr;
+            gap: 22px;
+            align-items: start;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 4px;
+            padding: 9px;
+            border: 1px solid #bbb;
+            border-radius: 8px;
+        }
+
+        button {
+            margin-top: 10px;
+            margin-right: 6px;
+            padding: 10px 13px;
+            border: none;
+            border-radius: 8px;
+            background: #222;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button.secondary {
+            background: #555;
+        }
+
+        button.good {
+            background: #147a3f;
+        }
+
+        button.danger {
+            background: #b42318;
+        }
+
+        button.full {
+            width: 100%;
+            font-size: 15px;
+            padding: 13px;
+        }
+
+        pre {
+            background: #111;
+            color: #00ff99;
+            border-radius: 12px;
+            padding: 15px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 640px;
+        }
+
+        .token {
+            background: #eee;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            word-break: break-all;
+            min-height: 34px;
+        }
+
+        .checklist {
+            display: grid;
+            gap: 8px;
+        }
+
+        .item {
+            background: #f0f0f0;
+            border-radius: 8px;
+            padding: 9px;
+            font-size: 14px;
+        }
+
+        .ok {
+            background: #dff5e7;
+        }
+
+        .fail {
+            background: #ffe0e0;
+        }
+
+        .pending {
+            background: #f0f0f0;
+        }
+
+        .notice {
+            background: #fff7d6;
+            border: 1px solid #e0c45c;
+            padding: 12px;
+            border-radius: 10px;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        code {
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>User/Auth 한 페이지 테스트</h1>
+<p>회원가입 → 승인 전 로그인 차단 → 임시 승인 → 로그인/JWT → 보호 API → 관리자 API 차단 → 로그아웃 → 기존 토큰 차단</p>
+
+
+<div class="layout">
+    <div>
+        <div class="card">
+            <h2>테스트 계정 입력</h2>
+
+            <label>학번</label>
+            <input id="studentId">
+
+            <label>비밀번호</label>
+            <input id="password" value="Password123">
+
+            <label>이름</label>
+            <input id="name" value="테스트유저">
+
+            <label>학교/학과</label>
+            <input id="school" value="컴퓨터학부">
+
+            <label>증명서 URL</label>
+            <input id="certificateUrl" value="https://example.com/cert.png">
+
+            <button class="secondary" onclick="setRandomStudentId()">랜덤 학번 생성</button>
+        </div>
+
+        <div class="card">
+            <h2>전체 자동 테스트</h2>
+            <button class="good full" onclick="runAll()">전체 흐름 자동 실행</button>
+            <button class="danger full" onclick="clearLog()">로그 초기화</button>
+        </div>
+
+        <div class="card">
+            <h2>개별 테스트</h2>
+            <button onclick="seedNicknames()">1. 닉네임 단어 세팅</button>
+            <button onclick="signup()">2. 회원가입</button>
+            <button onclick="duplicateSignup()">3. 중복 회원가입</button>
+            <button onclick="invalidPasswordSignup()">4. 비밀번호 오류 회원가입</button>
+            <button onclick="loginBeforeApprove()">5. 승인 전 로그인</button>
+            <button onclick="approve()">6. 임시 승인</button>
+            <button onclick="loginAfterApprove()">7. 승인 후 로그인</button>
+            <button onclick="me()">8. JWT 내 정보 확인</button>
+            <button onclick="adminAccess()">9. 관리자 API 접근</button>
+            <button onclick="logout()">10. 로그아웃</button>
+            <button onclick="reuseOldToken()">11. 기존 토큰 재사용</button>
+            <button onclick="meWithoutToken()">12. 토큰 없이 보호 API</button>
+        </div>
+
+        <div class="card">
+            <h2>현재 Access Token</h2>
+            <div id="tokenBox" class="token">없음</div>
+        </div>
+
+        <div class="card">
+            <h2>체크리스트</h2>
+            <div class="checklist">
+                <div id="step-seed" class="item pending">닉네임 단어 세팅</div>
+                <div id="step-signup" class="item pending">회원가입 201</div>
+                <div id="step-duplicate" class="item pending">중복 학번 400</div>
+                <div id="step-invalid-password" class="item pending">비밀번호 오류 400</div>
+                <div id="step-login-before" class="item pending">승인 전 로그인 403</div>
+                <div id="step-approve" class="item pending">임시 승인 APPROVED</div>
+                <div id="step-login-after" class="item pending">승인 후 로그인 200 + JWT</div>
+                <div id="step-me" class="item pending">JWT 보호 API 200</div>
+                <div id="step-admin" class="item pending">USER의 관리자 API 403</div>
+                <div id="step-logout" class="item pending">로그아웃 200</div>
+                <div id="step-reuse" class="item pending">기존 토큰 재사용 401</div>
+                <div id="step-no-token" class="item pending">토큰 없이 보호 API 401</div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <h2>응답 로그</h2>
+        <pre id="log"></pre>
+    </div>
+</div>
+
+<script>
+    let accessToken = localStorage.getItem("accessToken") || "";
+    let oldAccessToken = localStorage.getItem("oldAccessToken") || "";
+
+    setRandomStudentId();
+    updateTokenBox();
+
+    function setRandomStudentId() {
+        const suffix = String(Date.now()).slice(-6);
+        document.getElementById("studentId").value = "2022" + suffix;
+    }
+
+    function getStudentId() {
+        return Number(document.getElementById("studentId").value.trim());
+    }
+
+    function getPassword() {
+        return document.getElementById("password").value.trim();
+    }
+
+    function getSignupBody(passwordOverride = null, studentIdOverride = null) {
+        return {
+            studentId: studentIdOverride ?? getStudentId(),
+            password: passwordOverride ?? getPassword(),
+            name: document.getElementById("name").value.trim(),
+            school: document.getElementById("school").value.trim(),
+            certificateUrl: document.getElementById("certificateUrl").value.trim()
+        };
+    }
+
+    function getLoginBody() {
+        return {
+            studentId: getStudentId(),
+            password: getPassword()
+        };
+    }
+
+    function updateTokenBox() {
+        document.getElementById("tokenBox").textContent = accessToken || "없음";
+    }
+
+    function clearLog() {
+        document.getElementById("log").textContent = "";
+        document.querySelectorAll(".item").forEach(item => {
+            item.className = "item pending";
+        });
+        accessToken = "";
+        oldAccessToken = "";
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("oldAccessToken");
+        updateTokenBox();
+    }
+
+    function log(title, result) {
+        const logBox = document.getElementById("log");
+        const now = new Date().toLocaleTimeString();
+
+        logBox.textContent =
+            `[${now}] ${title}\n` +
+            JSON.stringify(result, null, 2) +
+            "\n\n" +
+            logBox.textContent;
+    }
+
+    function mark(id, success, text = null) {
+        const el = document.getElementById(id);
+        el.className = "item " + (success ? "ok" : "fail");
+        if (text) {
+            el.textContent = text;
+        }
+    }
+
+    async function request(method, url, body = null, token = null) {
+        const headers = {
+            "Content-Type": "application/json"
+        };
+
+        if (token) {
+            headers["Authorization"] = "Bearer " + token;
+        }
+
+        const options = {
+            method,
+            headers
+        };
+
+        if (body !== null) {
+            options.body = JSON.stringify(body);
+        }
+
+        const response = await fetch(url, options);
+
+        let data;
+        try {
+            data = await response.json();
+        } catch (e) {
+            data = {
+                message: "JSON 응답 없음"
+            };
+        }
+
+        return {
+            httpStatus: response.status,
+            ok: response.ok,
+            data
+        };
+    }
+
+    async function seedNicknames() {
+        const result = await request("POST", "/api/auth-test/seed-nicknames");
+        log("닉네임 단어 세팅", result);
+        mark("step-seed", result.httpStatus === 200);
+        return result;
+    }
+
+    async function signup() {
+        const result = await request("POST", "/api/users/signup", getSignupBody());
+        log("회원가입", result);
+        mark("step-signup", result.httpStatus === 201);
+        return result;
+    }
+
+    async function duplicateSignup() {
+        const result = await request("POST", "/api/users/signup", getSignupBody());
+        log("중복 회원가입 테스트", result);
+        mark("step-duplicate", result.httpStatus === 400);
+        return result;
+    }
+
+    async function invalidPasswordSignup() {
+        const invalidStudentId = getStudentId() + 1;
+        const result = await request(
+            "POST",
+            "/api/users/signup",
+            getSignupBody("1234", invalidStudentId)
+        );
+        log("비밀번호 형식 오류 테스트", result);
+        mark("step-invalid-password", result.httpStatus === 400);
+        return result;
+    }
+
+    async function loginBeforeApprove() {
+        const result = await request("POST", "/api/users/login", getLoginBody());
+        log("승인 전 로그인 테스트", result);
+        mark("step-login-before", result.httpStatus === 403);
+        return result;
+    }
+
+    async function approve() {
+        const result = await request("POST", `/api/auth-test/approve/${getStudentId()}`);
+        log("임시 승인", result);
+        mark("step-approve", result.httpStatus === 200 && result.data.status === "APPROVED");
+        return result;
+    }
+
+    async function loginAfterApprove() {
+        const result = await request("POST", "/api/users/login", getLoginBody());
+
+        if (result.ok && result.data.accessToken) {
+            accessToken = result.data.accessToken;
+            oldAccessToken = accessToken;
+            localStorage.setItem("accessToken", accessToken);
+            localStorage.setItem("oldAccessToken", oldAccessToken);
+            updateTokenBox();
+        }
+
+        log("승인 후 로그인 테스트", result);
+        mark("step-login-after", result.httpStatus === 200 && !!result.data.accessToken);
+        return result;
+    }
+
+    async function me() {
+        const result = await request("GET", "/api/auth-test/me", null, accessToken);
+        log("JWT 내 정보 확인", result);
+        mark("step-me", result.httpStatus === 200);
+        return result;
+    }
+
+    async function adminAccess() {
+        const result = await request("GET", "/api/admin/auth-test", null, accessToken);
+        log("관리자 API 접근 테스트", result);
+        mark("step-admin", result.httpStatus === 403);
+        return result;
+    }
+
+    async function logout() {
+        const result = await request("POST", "/api/users/logout", null, accessToken);
+
+        if (result.ok) {
+            oldAccessToken = accessToken;
+            localStorage.setItem("oldAccessToken", oldAccessToken);
+            accessToken = "";
+            localStorage.removeItem("accessToken");
+            updateTokenBox();
+        }
+
+        log("로그아웃", result);
+        mark("step-logout", result.httpStatus === 200);
+        return result;
+    }
+
+    async function reuseOldToken() {
+        const result = await request("GET", "/api/auth-test/me", null, oldAccessToken);
+        log("기존 토큰 재사용 테스트", result);
+        mark("step-reuse", result.httpStatus === 401);
+        return result;
+    }
+
+    async function meWithoutToken() {
+        const result = await request("GET", "/api/auth-test/me", null, null);
+        log("토큰 없이 보호 API 접근 테스트", result);
+        mark("step-no-token", result.httpStatus === 401);
+        return result;
+    }
+
+    async function runAll() {
+        clearLog();
+
+        await seedNicknames();
+        await signup();
+        await duplicateSignup();
+        await invalidPasswordSignup();
+        await loginBeforeApprove();
+        await approve();
+        await loginAfterApprove();
+        await me();
+        await adminAccess();
+        await logout();
+        await reuseOldToken();
+        await meWithoutToken();
+    }
+</script>
+</body>
+</html>

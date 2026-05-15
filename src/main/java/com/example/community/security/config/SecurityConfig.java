@@ -42,11 +42,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/users/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
 
+                        .requestMatchers("/dev/**").permitAll() // 로컬 프론트 테스트용
+                        .requestMatchers("/error").permitAll()  // 로컬 프론트 테스트용
+                        .requestMatchers(HttpMethod.POST, "/api/auth-test/seed-nicknames").permitAll() // 로컬 프론트 테스트용
+                        .requestMatchers(HttpMethod.POST, "/api/auth-test/approve/**").permitAll() // 로컬 프론트 테스트용
+
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
 
 
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
