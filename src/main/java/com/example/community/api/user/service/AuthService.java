@@ -117,7 +117,7 @@ public class AuthService {
         if (password == null || !PASSWORD_PATTERN.matcher(password).matches()) {
             throw new AuthException(
                     HttpStatus.BAD_REQUEST,
-                    "비밀번호 형식 오류"
+                    "비밀번호 형식 오류 (영문 포함, 숫자 포함, 8자 이상 20자 이하"
             );
         }
     }
