@@ -64,6 +64,8 @@ com.example.community/
 | 5 | 게시글 삭제 | DELETE | /api/admin/posts/{postId} | - | 204 No Content |
 | 6 | 댓글 삭제 | DELETE | /api/admin/comments/{commentId} | - | 204 No Content |
 | 7 | 회원 정지 | PATCH | /api/admin/users/{userId}/ban | { reason } | userId, status, startAt, endAt |
+
+> **미결 사항:** ban API의 `endAt`이 요청 바디에 없음. ERD의 `user_sanctions.end_at`은 nullable이므로 구현 시 팀과 합의 필요. 옵션: (a) 요청 바디에 endAt 추가, (b) 고정 기간(예: 7일) 서버에서 설정, (c) null로 두고 무기한 정지.
 | 8 | 강제 탈퇴 | DELETE | /api/admin/users/{userId} | { reason } | 204 No Content |
 
 ### 공통 응답 포맷
