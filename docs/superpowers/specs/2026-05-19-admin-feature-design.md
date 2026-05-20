@@ -2,7 +2,7 @@
 
 ## 프로젝트 개요
 
-- 프로젝트: 대학교 인증 익명 커뮤니티 백엔드 (라이클리온 백엔드 2팀)
+- 프로젝트: 대학교 인증 익명 커뮤니티 백엔드 (멋쟁이사자처럼 백엔드 2팀)
 - 담당: Admin 기능 (은혜님)
 - 스택: Spring Boot 3.5, JPA/Hibernate, H2(개발), Spring Security, JWT, Lombok
 - 진행 방식: 기능 단위 하네스 루프 (브레인스토밍 → 계획 → TDD → 구현 → 검증)
@@ -65,7 +65,7 @@ com.example.community/
 | 6 | 댓글 삭제 | DELETE | /api/admin/comments/{commentId} | - | 204 No Content |
 | 7 | 회원 정지 | PATCH | /api/admin/users/{userId}/ban | { reason } | userId, status, startAt, endAt |
 
-> **미결 사항:** ban API의 `endAt`이 요청 바디에 없음. ERD의 `user_sanctions.end_at`은 nullable이므로 구현 시 팀과 합의 필요. 옵션: (a) 요청 바디에 endAt 추가, (b) 고정 기간(예: 7일) 서버에서 설정, (c) null로 두고 무기한 정지.
+> **결정:** ban의 `endAt` = 서버에서 `startAt + 7일` 고정. 무기한 정지가 필요하면 강제탈퇴(DELETE)를 사용.
 | 8 | 강제 탈퇴 | DELETE | /api/admin/users/{userId} | { reason } | 204 No Content |
 
 ### 공통 응답 포맷

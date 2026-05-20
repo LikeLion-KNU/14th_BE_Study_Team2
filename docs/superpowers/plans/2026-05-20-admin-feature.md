@@ -1393,6 +1393,7 @@ git commit -m "feat: 게시글/댓글 소프트 삭제 API 구현 (DELETE /api/a
 
         assertThat(result.getStatus()).isEqualTo("BANNED");
         assertThat(result.getStartAt()).isNotNull();
+        assertThat(result.getEndAt()).isEqualTo(result.getStartAt().plusDays(7));
     }
 ```
 
@@ -1404,7 +1405,8 @@ import 추가: `import com.example.community.domain.admin.dto.response.BanRespon
     @Test
     @WithMockUser(username = "1", roles = "ADMIN")
     void banUser_returns200() throws Exception {
-        BanResponse response = new BanResponse(1L, "BANNED", java.time.LocalDateTime.now(), null);
+        java.time.LocalDateTime startAt = java.time.LocalDateTime.now();
+        BanResponse response = new BanResponse(1L, "BANNED", startAt, startAt.plusDays(7));
         when(adminService.banUser(eq(1L), eq(1L), anyString())).thenReturn(response);
 
         mockMvc.perform(patch("/api/admin/users/1/ban")
@@ -1452,7 +1454,7 @@ public class BanResponse {
     private Long userId;
     private String status;
     private LocalDateTime startAt;
-    private LocalDateTime endAt; // null = 무기한 정지 (팀 논의 필요)
+    private LocalDateTime endAt; // startAt + 7일 고정
 }
 ```
 
@@ -1466,9 +1468,10 @@ public class BanResponse {
         Admin admin = adminRepository.findByUser_Id(adminUserId)
             .orElseThrow(() -> new CustomException(ErrorCode.ADMIN_NOT_FOUND));
         LocalDateTime startAt = LocalDateTime.now();
+        LocalDateTime endAt = startAt.plusDays(7);
         user.ban();
-        userSanctionRepository.save(UserSanction.of(user, admin, SanctionType.BAN, reason, startAt, null));
-        return new BanResponse(user.getId(), user.getStatus().name(), startAt, null);
+        userSanctionRepository.save(UserSanction.of(user, admin, SanctionType.BAN, reason, startAt, endAt));
+        return new BanResponse(user.getId(), user.getStatus().name(), startAt, endAt);
     }
 ```
 
