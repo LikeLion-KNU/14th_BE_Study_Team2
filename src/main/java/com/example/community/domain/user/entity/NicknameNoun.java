@@ -29,4 +29,11 @@ public class NicknameNoun { // 명사는 NicknameNoun
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public static NicknameNoun create(String word) {
+        NicknameNoun noun = new NicknameNoun();
+        noun.word = word;
+        noun.isActive = true;
+        return noun;
+    }
 }

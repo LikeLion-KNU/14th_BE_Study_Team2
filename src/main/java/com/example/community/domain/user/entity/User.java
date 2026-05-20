@@ -46,4 +46,48 @@ public class User extends BaseTimeEntity {
 
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
+
+    public static User createPendingUser(
+            Long studentId,
+            String hashedPw,
+            String name,
+            String school,
+            String nickname,
+            String certificateUrl
+    ) {
+        User user = new User();
+        user.studentId = studentId;
+        user.hashedPw = hashedPw;
+        user.name = name;
+        user.school = school;
+        user.nickname = nickname;
+        user.certificateUrl = certificateUrl;
+        user.status = UserStatus.PENDING;
+        user.role = UserRole.USER;
+        return user;
+    }
+
+    public boolean isApproved() {
+        return this.status == UserStatus.APPROVED;
+    }
+
+    public boolean isLoginBlocked() {
+        return this.status == UserStatus.PENDING
+                || this.status == UserStatus.REJECTED
+                || this.status == UserStatus.BANNED;
+    }
+
+    public void approve(LocalDateTime approvedAt) {
+        this.status = UserStatus.APPROVED;
+        this.approvedAt = approvedAt;
+    }
+
+    public void reject() {
+        this.status = UserStatus.REJECTED;
+        this.approvedAt = null;
+    }
+
+    public void ban() {
+        this.status = UserStatus.BANNED;
+    }
 }
