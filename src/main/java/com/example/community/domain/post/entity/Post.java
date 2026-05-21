@@ -5,7 +5,6 @@ import com.example.community.domain.post.enums.PostStatus;
 import com.example.community.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
