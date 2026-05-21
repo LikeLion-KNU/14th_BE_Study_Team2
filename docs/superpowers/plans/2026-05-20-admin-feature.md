@@ -17,7 +17,8 @@
 - `src/main/java/com/example/community/common/exception/ErrorCode.java`
 - `src/main/java/com/example/community/common/exception/CustomException.java`
 - `src/main/java/com/example/community/common/exception/GlobalExceptionHandler.java`
-- `src/main/java/com/example/community/config/SecurityConfig.java`
+- `src/main/java/com/example/community/config/JpaConfig.java`
+- *(SecurityConfig은 PR #4의 `security/config/SecurityConfig.java`를 사용 — 직접 생성하지 않음)*
 
 **생성 — Repository**
 - `src/main/java/com/example/community/domain/user/repository/UserRepository.java`
@@ -73,7 +74,7 @@
 package com.example.community.common.exception;
 
 import com.example.community.common.dto.ApiResponse;
-import com.example.community.config.SecurityConfig;
+import com.example.community.security.config.SecurityConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,7 +89,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = GlobalExceptionHandlerTest.TestController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, GlobalExceptionHandler.class, GlobalExceptionHandlerTest.TestController.class})
 class GlobalExceptionHandlerTest {
 
     @Autowired MockMvc mockMvc;
@@ -223,62 +224,20 @@ public class GlobalExceptionHandler {
 }
 ```
 
-- [ ] **Step 7: SecurityConfig 생성** (테스트에 필요하므로 Task 1에서 함께 생성)
+- [ ] **Step 7: 테스트 통과 확인**
 
-```java
-// src/main/java/com/example/community/config/SecurityConfig.java
-package com.example.community.config;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-
-@Configuration
-@EnableWebSecurity
-@EnableMethodSecurity
-public class SecurityConfig {
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable())
-            .headers(headers -> headers.frameOptions(frame -> frame.disable()))
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .anyRequest().permitAll()
-            );
-        return http.build();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-}
-```
-
-- [ ] **Step 8: 테스트 통과 확인**
+> **NOTE:** SecurityConfig는 PR #4(`security/config/SecurityConfig.java`)에서 제공된다. 별도로 생성하지 않는다. `@EnableJpaAuditing`을 분리한 `JpaConfig.java`는 이미 존재해야 한다.
 
 ```bash
 ./gradlew test --tests "com.example.community.common.exception.GlobalExceptionHandlerTest" 2>&1 | tail -10
 ```
 예상: BUILD SUCCESSFUL, 1 test passed
 
-- [ ] **Step 9: 커밋**
+- [ ] **Step 8: 커밋**
 
 ```bash
 git add src/main/java/com/example/community/common src/main/java/com/example/community/config src/test/java/com/example/community/common
-git commit -m "feat: 공통 응답 포맷, 예외 처리, SecurityConfig 추가"
+git commit -m "feat: 공통 응답 포맷, 예외 처리 추가"
 ```
 
 ---
@@ -651,7 +610,7 @@ class AdminServiceTest {
 // src/test/java/com/example/community/domain/admin/controller/AdminControllerTest.java
 package com.example.community.domain.admin.controller;
 
-import com.example.community.config.SecurityConfig;
+import com.example.community.security.config.SecurityConfig;
 import com.example.community.domain.admin.dto.response.PendingUserResponse;
 import com.example.community.domain.admin.service.AdminService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -778,9 +737,10 @@ public class AdminService {
             .map(PendingUserResponse::from);
     }
 
-    // 헬퍼: 컨트롤러에서 받은 userId로 Admin 조회
-    public Admin findAdminByUserId(Long userId) {
-        return adminRepository.findByUser_Id(userId)
+    // 헬퍼: 현재 로그인한 관리자 엔티티 조회 (SecurityUtil 사용)
+    private Admin findCurrentAdmin() {
+        Long adminUserId = com.example.community.security.util.SecurityUtil.getCurrentUserId();
+        return adminRepository.findByUser_Id(adminUserId)
             .orElseThrow(() -> new CustomException(ErrorCode.ADMIN_NOT_FOUND));
     }
 }
@@ -1102,15 +1062,36 @@ git commit -m "feat: 가입 승인 API 구현 (PATCH /api/admin/users/{userId}/a
 
 - [ ] **Step 1: AdminServiceTest에 테스트 추가**
 
+SecurityUtil은 `SecurityContextHolder`를 읽는다. Mockito로는 static 메서드를 mock할 수 없으므로, 테스트에서 직접 SecurityContext를 설정한다.
+
+`AdminServiceTest` 클래스에 `@AfterEach` 추가 (처음 한 번만):
+```java
+    @AfterEach
+    void clearSecurityContext() {
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+    }
+```
+
+그 다음 테스트 추가:
 ```java
     @Test
     void rejectUser_changesStatusAndSavesRejection() {
+        // SecurityContext에 관리자(userId=99) 설정
+        com.example.community.security.principal.CustomUserPrincipal principal =
+            new com.example.community.security.principal.CustomUserPrincipal(
+                99L, 20201234L, com.example.community.domain.user.enums.UserRole.ADMIN, "session-1");
+        org.springframework.security.core.Authentication auth =
+            new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                principal, null,
+                java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN")));
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+
         User user = User.create(20201234L, "pw", "홍길동", "경북대학교", "닉네임1", "http://cert.url");
         Admin admin = Admin.create(User.create(99L, "pw", "관리자", "경북대학교", "admin닉", "http://cert.url"), AdminLevel.STAFF);
         when(userRepository.findById(1L)).thenReturn(java.util.Optional.of(user));
         when(adminRepository.findByUser_Id(99L)).thenReturn(java.util.Optional.of(admin));
 
-        RejectResponse result = adminService.rejectUser(1L, 99L, "서류 미비");
+        RejectResponse result = adminService.rejectUser(1L, "서류 미비");
 
         assertThat(result.getStatus()).isEqualTo("REJECTED");
     }
@@ -1129,7 +1110,7 @@ import com.example.community.domain.user.enums.AdminLevel;
     @WithMockUser(username = "1", roles = "ADMIN")
     void rejectUser_returns200() throws Exception {
         RejectResponse response = new RejectResponse(1L, "REJECTED");
-        when(adminService.rejectUser(eq(1L), eq(1L), anyString())).thenReturn(response);
+        when(adminService.rejectUser(eq(1L), anyString())).thenReturn(response);
 
         mockMvc.perform(patch("/api/admin/users/1/reject")
                 .contentType("application/json")
@@ -1184,11 +1165,10 @@ public class RejectResponse {
 
 ```java
     @Transactional
-    public RejectResponse rejectUser(Long userId, Long adminUserId, String reason) {
+    public RejectResponse rejectUser(Long userId, String reason) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        Admin admin = adminRepository.findByUser_Id(adminUserId)
-            .orElseThrow(() -> new CustomException(ErrorCode.ADMIN_NOT_FOUND));
+        Admin admin = findCurrentAdmin();
         user.reject();
         userRejectionRepository.save(UserRejection.of(user, admin, reason));
         return new RejectResponse(user.getId(), user.getStatus().name());
@@ -1207,10 +1187,8 @@ import com.example.community.domain.user.entity.UserRejection;
     @PatchMapping("/users/{userId}/reject")
     public ResponseEntity<ApiResponse<RejectResponse>> rejectUser(
         @PathVariable Long userId,
-        @RequestBody @Valid RejectRequest request,
-        @AuthenticationPrincipal UserDetails userDetails) {
-        Long adminUserId = Long.parseLong(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success(adminService.rejectUser(userId, adminUserId, request.getReason())));
+        @RequestBody @Valid RejectRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(adminService.rejectUser(userId, request.getReason())));
     }
 ```
 
@@ -1384,12 +1362,21 @@ git commit -m "feat: 게시글/댓글 소프트 삭제 API 구현 (DELETE /api/a
 ```java
     @Test
     void banUser_changesStatusAndSavesSanction() {
+        com.example.community.security.principal.CustomUserPrincipal principal =
+            new com.example.community.security.principal.CustomUserPrincipal(
+                99L, 20201234L, com.example.community.domain.user.enums.UserRole.ADMIN, "session-1");
+        org.springframework.security.core.Authentication auth =
+            new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                principal, null,
+                java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN")));
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+
         User user = User.create(20201234L, "pw", "홍길동", "경북대학교", "닉네임1", "http://cert.url");
         Admin admin = Admin.create(User.create(99L, "pw", "관리자", "경북대학교", "admin닉", "http://cert.url"), AdminLevel.STAFF);
         when(userRepository.findById(1L)).thenReturn(java.util.Optional.of(user));
         when(adminRepository.findByUser_Id(99L)).thenReturn(java.util.Optional.of(admin));
 
-        BanResponse result = adminService.banUser(1L, 99L, "커뮤니티 규정 위반");
+        BanResponse result = adminService.banUser(1L, "커뮤니티 규정 위반");
 
         assertThat(result.getStatus()).isEqualTo("BANNED");
         assertThat(result.getStartAt()).isNotNull();
@@ -1407,7 +1394,7 @@ import 추가: `import com.example.community.domain.admin.dto.response.BanRespon
     void banUser_returns200() throws Exception {
         java.time.LocalDateTime startAt = java.time.LocalDateTime.now();
         BanResponse response = new BanResponse(1L, "BANNED", startAt, startAt.plusDays(7));
-        when(adminService.banUser(eq(1L), eq(1L), anyString())).thenReturn(response);
+        when(adminService.banUser(eq(1L), anyString())).thenReturn(response);
 
         mockMvc.perform(patch("/api/admin/users/1/ban")
                 .contentType("application/json")
@@ -1462,11 +1449,10 @@ public class BanResponse {
 
 ```java
     @Transactional
-    public BanResponse banUser(Long userId, Long adminUserId, String reason) {
+    public BanResponse banUser(Long userId, String reason) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        Admin admin = adminRepository.findByUser_Id(adminUserId)
-            .orElseThrow(() -> new CustomException(ErrorCode.ADMIN_NOT_FOUND));
+        Admin admin = findCurrentAdmin();
         LocalDateTime startAt = LocalDateTime.now();
         LocalDateTime endAt = startAt.plusDays(7);
         user.ban();
@@ -1489,10 +1475,8 @@ import java.time.LocalDateTime;
     @PatchMapping("/users/{userId}/ban")
     public ResponseEntity<ApiResponse<BanResponse>> banUser(
         @PathVariable Long userId,
-        @RequestBody @Valid BanRequest request,
-        @AuthenticationPrincipal UserDetails userDetails) {
-        Long adminUserId = Long.parseLong(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success(adminService.banUser(userId, adminUserId, request.getReason())));
+        @RequestBody @Valid BanRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(adminService.banUser(userId, request.getReason())));
     }
 ```
 
@@ -1529,12 +1513,21 @@ git commit -m "feat: 회원 정지 API 구현 (PATCH /api/admin/users/{userId}/b
 ```java
     @Test
     void withdrawUser_changesStatusAndSavesSanction() {
+        com.example.community.security.principal.CustomUserPrincipal principal =
+            new com.example.community.security.principal.CustomUserPrincipal(
+                99L, 20201234L, com.example.community.domain.user.enums.UserRole.ADMIN, "session-1");
+        org.springframework.security.core.Authentication auth =
+            new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                principal, null,
+                java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN")));
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+
         User user = User.create(20201234L, "pw", "홍길동", "경북대학교", "닉네임1", "http://cert.url");
         Admin admin = Admin.create(User.create(99L, "pw", "관리자", "경북대학교", "admin닉", "http://cert.url"), AdminLevel.STAFF);
         when(userRepository.findById(1L)).thenReturn(java.util.Optional.of(user));
         when(adminRepository.findByUser_Id(99L)).thenReturn(java.util.Optional.of(admin));
 
-        adminService.withdrawUser(1L, 99L, "운영 정책 위반");
+        adminService.withdrawUser(1L, "운영 정책 위반");
 
         assertThat(user.getStatus()).isEqualTo(UserStatus.BANNED);
     }
@@ -1575,11 +1568,10 @@ public class WithdrawRequest {
 
 ```java
     @Transactional
-    public void withdrawUser(Long userId, Long adminUserId, String reason) {
+    public void withdrawUser(Long userId, String reason) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        Admin admin = adminRepository.findByUser_Id(adminUserId)
-            .orElseThrow(() -> new CustomException(ErrorCode.ADMIN_NOT_FOUND));
+        Admin admin = findCurrentAdmin();
         LocalDateTime now = LocalDateTime.now();
         user.ban();
         userSanctionRepository.save(UserSanction.of(user, admin, SanctionType.FORCE_WITHDRAW, reason, now, null));
@@ -1592,10 +1584,8 @@ public class WithdrawRequest {
     @DeleteMapping("/users/{userId}")
     public ResponseEntity<Void> withdrawUser(
         @PathVariable Long userId,
-        @RequestBody @Valid WithdrawRequest request,
-        @AuthenticationPrincipal UserDetails userDetails) {
-        Long adminUserId = Long.parseLong(userDetails.getUsername());
-        adminService.withdrawUser(userId, adminUserId, request.getReason());
+        @RequestBody @Valid WithdrawRequest request) {
+        adminService.withdrawUser(userId, request.getReason());
         return ResponseEntity.noContent().build();
     }
 ```

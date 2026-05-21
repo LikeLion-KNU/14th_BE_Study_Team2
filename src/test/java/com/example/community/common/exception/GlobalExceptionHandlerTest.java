@@ -1,6 +1,6 @@
 package com.example.community.common.exception;
 
-import com.example.community.config.SecurityConfig;
+import com.example.community.security.config.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
