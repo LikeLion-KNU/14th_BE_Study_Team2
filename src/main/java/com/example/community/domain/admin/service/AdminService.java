@@ -5,12 +5,14 @@ import com.example.community.common.exception.ErrorCode;
 import com.example.community.domain.admin.dto.response.PendingUserResponse;
 import com.example.community.domain.admin.dto.response.UserDetailResponse;
 import com.example.community.domain.admin.dto.response.ApproveResponse;
+import com.example.community.domain.admin.dto.response.RejectResponse;
 import com.example.community.domain.post.enums.CommentStatus;
 import com.example.community.domain.post.enums.PostStatus;
 import com.example.community.domain.post.repository.CommentRepository;
 import com.example.community.domain.post.repository.PostRepository;
 import com.example.community.domain.user.entity.Admin;
 import com.example.community.domain.user.entity.User;
+import com.example.community.domain.user.entity.UserRejection;
 import com.example.community.domain.user.repository.AdminRepository;
 import com.example.community.domain.user.repository.UserRejectionRepository;
 import com.example.community.domain.user.repository.UserSanctionRepository;
@@ -58,6 +60,16 @@ public class AdminService {
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         user.approve();
         return new ApproveResponse(user.getId(), user.getStatus().name(), user.getApprovedAt());
+    }
+
+    @Transactional
+    public RejectResponse rejectUser(Long userId, String reason) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Admin admin = findCurrentAdmin();
+        user.reject();
+        userRejectionRepository.save(UserRejection.of(user, admin, reason));
+        return new RejectResponse(user.getId(), user.getStatus().name());
     }
 
     private Admin findCurrentAdmin() {

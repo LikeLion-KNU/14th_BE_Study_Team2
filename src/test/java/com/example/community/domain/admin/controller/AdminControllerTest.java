@@ -24,10 +24,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import com.example.community.domain.admin.dto.response.ApproveResponse;
+import com.example.community.domain.admin.dto.response.RejectResponse;
 
 @WebMvcTest(AdminController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
@@ -79,5 +82,18 @@ class AdminControllerTest {
         mockMvc.perform(patch("/api/admin/users/1/approve"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("APPROVED"));
+    }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
+    void rejectUser_returns200() throws Exception {
+        RejectResponse response = new RejectResponse(1L, "REJECTED");
+        when(adminService.rejectUser(eq(1L), anyString())).thenReturn(response);
+
+        mockMvc.perform(patch("/api/admin/users/1/reject")
+                .contentType("application/json")
+                .content("{\"reason\":\"서류 미비\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("REJECTED"));
     }
 }

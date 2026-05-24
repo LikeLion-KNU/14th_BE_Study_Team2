@@ -29,6 +29,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 import com.example.community.domain.admin.dto.response.ApproveResponse;
+import com.example.community.domain.admin.dto.response.RejectResponse;
+import com.example.community.domain.user.entity.Admin;
+import com.example.community.domain.user.enums.AdminLevel;
 
 @ExtendWith(MockitoExtension.class)
 class AdminServiceTest {
@@ -98,5 +101,26 @@ class AdminServiceTest {
 
         assertThat(result.getStatus()).isEqualTo("APPROVED");
         assertThat(result.getApprovedAt()).isNotNull();
+    }
+
+    @Test
+    void rejectUser_changesStatusAndSavesRejection() {
+        com.example.community.security.principal.CustomUserPrincipal principal =
+            new com.example.community.security.principal.CustomUserPrincipal(
+                99L, 20201234L, com.example.community.domain.user.enums.UserRole.ADMIN, "session-1");
+        org.springframework.security.core.Authentication auth =
+            new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                principal, null,
+                java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN")));
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(auth);
+
+        User user = User.create(20201234L, "pw", "홍길동", "경북대학교", "닉네임1", "http://cert.url");
+        Admin admin = Admin.create(User.create(99L, "pw", "관리자", "경북대학교", "admin닉", "http://cert.url"), AdminLevel.STAFF);
+        when(userRepository.findById(1L)).thenReturn(java.util.Optional.of(user));
+        when(adminRepository.findByUser_Id(99L)).thenReturn(java.util.Optional.of(admin));
+
+        RejectResponse result = adminService.rejectUser(1L, "서류 미비");
+
+        assertThat(result.getStatus()).isEqualTo("REJECTED");
     }
 }
