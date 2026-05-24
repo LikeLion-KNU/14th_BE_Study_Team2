@@ -123,4 +123,30 @@ class AdminServiceTest {
 
         assertThat(result.getStatus()).isEqualTo("REJECTED");
     }
+
+    @Test
+    void deletePost_softDeletesPost() {
+        com.example.community.domain.post.entity.Post post =
+            com.example.community.domain.post.entity.Post.createForTest(pendingUser, "제목", "내용");
+        when(postRepository.findById(1L)).thenReturn(java.util.Optional.of(post));
+
+        adminService.deletePost(1L);
+
+        assertThat(post.getStatus()).isEqualTo(com.example.community.domain.post.enums.PostStatus.DELETED);
+        assertThat(post.getDeletedAt()).isNotNull();
+    }
+
+    @Test
+    void deleteComment_softDeletesComment() {
+        com.example.community.domain.post.entity.Post post =
+            com.example.community.domain.post.entity.Post.createForTest(pendingUser, "제목", "내용");
+        com.example.community.domain.post.entity.Comment comment =
+            com.example.community.domain.post.entity.Comment.createForTest(post, pendingUser, "댓글내용");
+        when(commentRepository.findById(1L)).thenReturn(java.util.Optional.of(comment));
+
+        adminService.deleteComment(1L);
+
+        assertThat(comment.getStatus()).isEqualTo(com.example.community.domain.post.enums.CommentStatus.DELETED);
+        assertThat(comment.getDeletedAt()).isNotNull();
+    }
 }

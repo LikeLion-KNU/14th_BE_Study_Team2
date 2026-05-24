@@ -96,4 +96,18 @@ class AdminControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("REJECTED"));
     }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
+    void deletePost_returns204() throws Exception {
+        mockMvc.perform(delete("/api/admin/posts/1"))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
+    void deleteComment_returns204() throws Exception {
+        mockMvc.perform(delete("/api/admin/comments/1"))
+            .andExpect(status().isNoContent());
+    }
 }

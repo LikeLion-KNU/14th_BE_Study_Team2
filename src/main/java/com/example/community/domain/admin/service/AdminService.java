@@ -6,6 +6,8 @@ import com.example.community.domain.admin.dto.response.PendingUserResponse;
 import com.example.community.domain.admin.dto.response.UserDetailResponse;
 import com.example.community.domain.admin.dto.response.ApproveResponse;
 import com.example.community.domain.admin.dto.response.RejectResponse;
+import com.example.community.domain.post.entity.Comment;
+import com.example.community.domain.post.entity.Post;
 import com.example.community.domain.post.enums.CommentStatus;
 import com.example.community.domain.post.enums.PostStatus;
 import com.example.community.domain.post.repository.CommentRepository;
@@ -70,6 +72,20 @@ public class AdminService {
         user.reject();
         userRejectionRepository.save(UserRejection.of(user, admin, reason));
         return new RejectResponse(user.getId(), user.getStatus().name());
+    }
+
+    @Transactional
+    public void deletePost(Long postId) {
+        Post post = postRepository.findById(postId)
+            .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+        post.softDelete();
+    }
+
+    @Transactional
+    public void deleteComment(Long commentId) {
+        Comment comment = commentRepository.findById(commentId)
+            .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
+        comment.softDelete();
     }
 
     private Admin findCurrentAdmin() {

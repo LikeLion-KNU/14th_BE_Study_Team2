@@ -44,4 +44,16 @@ public class AdminController {
         @RequestBody @Valid RejectRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminService.rejectUser(userId, request.getReason())));
     }
+
+    @DeleteMapping("/posts/{postId}")
+    public ResponseEntity<Void> deletePost(@PathVariable Long postId) {
+        adminService.deletePost(postId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(@PathVariable Long commentId) {
+        adminService.deleteComment(commentId);
+        return ResponseEntity.noContent().build();
+    }
 }
