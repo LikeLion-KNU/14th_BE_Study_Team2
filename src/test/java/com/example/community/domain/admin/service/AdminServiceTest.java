@@ -28,6 +28,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
+import com.example.community.domain.admin.dto.response.ApproveResponse;
 
 @ExtendWith(MockitoExtension.class)
 class AdminServiceTest {
@@ -86,5 +87,16 @@ class AdminServiceTest {
 
         assertThatThrownBy(() -> adminService.getUserDetail(99L))
             .isInstanceOf(com.example.community.common.exception.CustomException.class);
+    }
+
+    @Test
+    void approveUser_changesStatusToApproved() {
+        User user = User.create(20201234L, "pw", "홍길동", "경북대학교", "닉네임1", "http://cert.url");
+        when(userRepository.findById(1L)).thenReturn(java.util.Optional.of(user));
+
+        ApproveResponse result = adminService.approveUser(1L);
+
+        assertThat(result.getStatus()).isEqualTo("APPROVED");
+        assertThat(result.getApprovedAt()).isNotNull();
     }
 }

@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.example.community.domain.admin.dto.response.ApproveResponse;
 
 @WebMvcTest(AdminController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
@@ -67,5 +68,16 @@ class AdminControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.name").value("홍길동"))
             .andExpect(jsonPath("$.data.postCount").value(3));
+    }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
+    void approveUser_returns200() throws Exception {
+        ApproveResponse response = new ApproveResponse(1L, "APPROVED", java.time.LocalDateTime.now());
+        when(adminService.approveUser(1L)).thenReturn(response);
+
+        mockMvc.perform(patch("/api/admin/users/1/approve"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("APPROVED"));
     }
 }

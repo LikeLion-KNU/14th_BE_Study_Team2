@@ -4,6 +4,7 @@ import com.example.community.common.exception.CustomException;
 import com.example.community.common.exception.ErrorCode;
 import com.example.community.domain.admin.dto.response.PendingUserResponse;
 import com.example.community.domain.admin.dto.response.UserDetailResponse;
+import com.example.community.domain.admin.dto.response.ApproveResponse;
 import com.example.community.domain.post.enums.CommentStatus;
 import com.example.community.domain.post.enums.PostStatus;
 import com.example.community.domain.post.repository.CommentRepository;
@@ -49,6 +50,14 @@ public class AdminService {
             user.getSchool(), user.getStatus().name(), user.getRole().name(),
             user.getCreatedAt(), user.getApprovedAt(), postCount, commentCount
         );
+    }
+
+    @Transactional
+    public ApproveResponse approveUser(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        user.approve();
+        return new ApproveResponse(user.getId(), user.getStatus().name(), user.getApprovedAt());
     }
 
     private Admin findCurrentAdmin() {
