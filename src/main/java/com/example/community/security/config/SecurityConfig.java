@@ -46,7 +46,6 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()  // 로컬 프론트 테스트용
                         .requestMatchers(HttpMethod.POST, "/api/auth-test/seed-nicknames").permitAll() // 로컬 프론트 테스트용
                         .requestMatchers(HttpMethod.POST, "/api/auth-test/approve/**").permitAll() // 로컬 프론트 테스트용
-                        .requestMatchers(HttpMethod.POST, "/api/auth-test/create-admin").permitAll() // 로컬 프론트 테스트용
 
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()

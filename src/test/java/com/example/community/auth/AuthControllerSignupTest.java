@@ -108,7 +108,7 @@ class AuthControllerSignupTest {
                         .content(requestBody))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("비밀번호 형식 오류 (영문 포함, 숫자 포함, 8자 이상 20자 이하"));
+                .andExpect(jsonPath("$.message").value("비밀번호 형식 오류"));
     }
 
     @Test

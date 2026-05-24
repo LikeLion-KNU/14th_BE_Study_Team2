@@ -90,41 +90,4 @@ public class User extends BaseTimeEntity {
     public void ban() {
         this.status = UserStatus.BANNED;
     }
-
-    // Admin 기능용 팩토리 메서드 (createPendingUser와 동일, 테스트 편의용)
-    public static User create(Long studentId, String hashedPw, String name,
-                              String school, String nickname, String certificateUrl) {
-        User user = new User();
-        user.studentId = studentId;
-        user.hashedPw = hashedPw;
-        user.name = name;
-        user.school = school;
-        user.nickname = nickname;
-        user.certificateUrl = certificateUrl;
-        user.status = UserStatus.PENDING;
-        user.role = UserRole.USER;
-        return user;
-    }
-
-    // 어드민 승인용 no-arg approve (시간은 내부에서 설정)
-    public void approve() {
-        this.status = UserStatus.APPROVED;
-        this.approvedAt = LocalDateTime.now();
-    }
-
-    // 로컬 테스트용 — ADMIN 권한 유저 직접 생성
-    public static User createAdminUser(Long studentId, String hashedPw, String name,
-                                       String school, String nickname, String certificateUrl) {
-        User user = new User();
-        user.studentId = studentId;
-        user.hashedPw = hashedPw;
-        user.name = name;
-        user.school = school;
-        user.nickname = nickname;
-        user.certificateUrl = certificateUrl;
-        user.status = UserStatus.APPROVED;
-        user.role = UserRole.ADMIN;
-        user.approvedAt = LocalDateTime.now();
-        return user;
-    }
 }

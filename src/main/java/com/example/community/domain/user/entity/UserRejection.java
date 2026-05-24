@@ -34,12 +34,4 @@ public class UserRejection {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    public static UserRejection of(User user, Admin admin, String reason) {
-        UserRejection rejection = new UserRejection();
-        rejection.user = user;
-        rejection.admin = admin;
-        rejection.reason = reason;
-        return rejection;
-    }
 }

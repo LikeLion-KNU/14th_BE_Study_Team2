@@ -5,6 +5,7 @@ import com.example.community.domain.post.enums.CommentStatus;
 import com.example.community.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -37,19 +38,4 @@ public class Comment extends BaseTimeEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-
-    public void softDelete() {
-        this.status = CommentStatus.DELETED;
-        this.deletedAt = LocalDateTime.now();
-    }
-
-    // 테스트 전용 팩토리
-    public static Comment createForTest(Post post, User user, String content) {
-        Comment comment = new Comment();
-        comment.post = post;
-        comment.user = user;
-        comment.content = content;
-        comment.status = CommentStatus.PUBLISHED;
-        return comment;
-    }
 }

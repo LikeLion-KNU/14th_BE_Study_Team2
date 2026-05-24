@@ -3,6 +3,7 @@ package com.example.community.domain.user.entity;
 import com.example.community.domain.user.enums.AdminLevel;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -37,13 +38,4 @@ public class Admin {
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
-
-    public static Admin create(User user, AdminLevel adminLevel) {
-        Admin admin = new Admin();
-        admin.user = user;
-        admin.adminLevel = adminLevel;
-        admin.grantedAt = LocalDateTime.now();
-        admin.isActive = true;
-        return admin;
-    }
 }

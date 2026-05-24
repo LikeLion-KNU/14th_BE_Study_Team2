@@ -5,6 +5,7 @@ import com.example.community.domain.post.enums.PostStatus;
 import com.example.community.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -36,19 +37,4 @@ public class Post extends BaseTimeEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-
-    public void softDelete() {
-        this.status = PostStatus.DELETED;
-        this.deletedAt = LocalDateTime.now();
-    }
-
-    // 테스트 전용 팩토리
-    public static Post createForTest(User user, String title, String content) {
-        Post post = new Post();
-        post.user = user;
-        post.title = title;
-        post.content = content;
-        post.status = PostStatus.PUBLISHED;
-        return post;
-    }
 }
