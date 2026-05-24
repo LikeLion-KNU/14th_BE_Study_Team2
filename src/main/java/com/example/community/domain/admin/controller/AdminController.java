@@ -45,7 +45,7 @@ public class AdminController {
     public ResponseEntity<ApiResponse<RejectResponse>> rejectUser(
         @PathVariable Long userId,
         @RequestBody @Valid RejectRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(adminService.rejectUser(userId, request.getReason())));
+        return ResponseEntity.ok(ApiResponse.success(adminService.rejectUser(userId, request.reason())));
     }
 
     @DeleteMapping("/posts/{postId}")
@@ -64,14 +64,14 @@ public class AdminController {
     public ResponseEntity<ApiResponse<BanResponse>> banUser(
         @PathVariable Long userId,
         @RequestBody @Valid BanRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(adminService.banUser(userId, request.getReason())));
+        return ResponseEntity.ok(ApiResponse.success(adminService.banUser(userId, request.reason())));
     }
 
     @DeleteMapping("/users/{userId}")
     public ResponseEntity<Void> withdrawUser(
         @PathVariable Long userId,
         @RequestBody @Valid WithdrawRequest request) {
-        adminService.withdrawUser(userId, request.getReason());
+        adminService.withdrawUser(userId, request.reason());
         return ResponseEntity.noContent().build();
     }
 }

@@ -67,8 +67,8 @@ class AdminServiceTest {
         Page<PendingUserResponse> result = adminService.getPendingUsers(pageable);
 
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).getName()).isEqualTo("홍길동");
-        assertThat(result.getContent().get(0).getStudentId()).isEqualTo(20201234L);
+        assertThat(result.getContent().get(0).name()).isEqualTo("홍길동");
+        assertThat(result.getContent().get(0).studentId()).isEqualTo(20201234L);
     }
 
     @Test
@@ -80,9 +80,9 @@ class AdminServiceTest {
 
         UserDetailResponse result = adminService.getUserDetail(userId);
 
-        assertThat(result.getName()).isEqualTo("홍길동");
-        assertThat(result.getPostCount()).isEqualTo(3L);
-        assertThat(result.getCommentCount()).isEqualTo(5L);
+        assertThat(result.name()).isEqualTo("홍길동");
+        assertThat(result.postCount()).isEqualTo(3L);
+        assertThat(result.commentCount()).isEqualTo(5L);
     }
 
     @Test
@@ -100,8 +100,8 @@ class AdminServiceTest {
 
         ApproveResponse result = adminService.approveUser(1L);
 
-        assertThat(result.getStatus()).isEqualTo("APPROVED");
-        assertThat(result.getApprovedAt()).isNotNull();
+        assertThat(result.status()).isEqualTo("APPROVED");
+        assertThat(result.approvedAt()).isNotNull();
     }
 
     @Test
@@ -122,7 +122,7 @@ class AdminServiceTest {
 
         RejectResponse result = adminService.rejectUser(1L, "서류 미비");
 
-        assertThat(result.getStatus()).isEqualTo("REJECTED");
+        assertThat(result.status()).isEqualTo("REJECTED");
     }
 
     @Test
@@ -169,9 +169,9 @@ class AdminServiceTest {
 
         BanResponse result = adminService.banUser(1L, "커뮤니티 규정 위반");
 
-        assertThat(result.getStatus()).isEqualTo("BANNED");
-        assertThat(result.getStartAt()).isNotNull();
-        assertThat(result.getEndAt()).isEqualTo(result.getStartAt().plusDays(7));
+        assertThat(result.status()).isEqualTo("BANNED");
+        assertThat(result.startAt()).isNotNull();
+        assertThat(result.endAt()).isEqualTo(result.startAt().plusDays(7));
     }
 
     @Test
