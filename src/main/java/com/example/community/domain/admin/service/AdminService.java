@@ -105,6 +105,16 @@ public class AdminService {
         return new BanResponse(user.getId(), user.getStatus().name(), startAt, endAt);
     }
 
+    @Transactional
+    public void withdrawUser(Long userId, String reason) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Admin admin = findCurrentAdmin();
+        LocalDateTime now = LocalDateTime.now();
+        user.ban();
+        userSanctionRepository.save(UserSanction.of(user, admin, SanctionType.FORCE_WITHDRAW, reason, now, null));
+    }
+
     private Admin findCurrentAdmin() {
         Long adminUserId = SecurityUtil.getCurrentUserId();
         return adminRepository.findByUser_Id(adminUserId)

@@ -3,6 +3,7 @@ package com.example.community.domain.admin.controller;
 import com.example.community.common.dto.ApiResponse;
 import com.example.community.domain.admin.dto.request.RejectRequest;
 import com.example.community.domain.admin.dto.request.BanRequest;
+import com.example.community.domain.admin.dto.request.WithdrawRequest;
 import com.example.community.domain.admin.dto.response.PendingUserResponse;
 import com.example.community.domain.admin.dto.response.UserDetailResponse;
 import com.example.community.domain.admin.dto.response.ApproveResponse;
@@ -64,5 +65,13 @@ public class AdminController {
         @PathVariable Long userId,
         @RequestBody @Valid BanRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminService.banUser(userId, request.getReason())));
+    }
+
+    @DeleteMapping("/users/{userId}")
+    public ResponseEntity<Void> withdrawUser(
+        @PathVariable Long userId,
+        @RequestBody @Valid WithdrawRequest request) {
+        adminService.withdrawUser(userId, request.getReason());
+        return ResponseEntity.noContent().build();
     }
 }

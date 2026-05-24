@@ -125,4 +125,13 @@ class AdminControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("BANNED"));
     }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
+    void withdrawUser_returns204() throws Exception {
+        mockMvc.perform(delete("/api/admin/users/1")
+                .contentType("application/json")
+                .content("{\"reason\":\"운영 정책 위반\"}"))
+            .andExpect(status().isNoContent());
+    }
 }
