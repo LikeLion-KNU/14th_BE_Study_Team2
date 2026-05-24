@@ -3,9 +3,13 @@ package com.example.community.domain.admin.service;
 import com.example.community.common.exception.CustomException;
 import com.example.community.common.exception.ErrorCode;
 import com.example.community.domain.admin.dto.response.PendingUserResponse;
+import com.example.community.domain.admin.dto.response.UserDetailResponse;
+import com.example.community.domain.post.enums.CommentStatus;
+import com.example.community.domain.post.enums.PostStatus;
 import com.example.community.domain.post.repository.CommentRepository;
 import com.example.community.domain.post.repository.PostRepository;
 import com.example.community.domain.user.entity.Admin;
+import com.example.community.domain.user.entity.User;
 import com.example.community.domain.user.repository.AdminRepository;
 import com.example.community.domain.user.repository.UserRejectionRepository;
 import com.example.community.domain.user.repository.UserSanctionRepository;
@@ -33,6 +37,18 @@ public class AdminService {
     public Page<PendingUserResponse> getPendingUsers(Pageable pageable) {
         return userRepository.findByStatus(UserStatus.PENDING, pageable)
             .map(PendingUserResponse::from);
+    }
+
+    public UserDetailResponse getUserDetail(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        long postCount = postRepository.countByUser_IdAndStatusNot(userId, PostStatus.DELETED);
+        long commentCount = commentRepository.countByUser_IdAndStatusNot(userId, CommentStatus.DELETED);
+        return new UserDetailResponse(
+            user.getId(), user.getStudentId(), user.getNickname(), user.getName(),
+            user.getSchool(), user.getStatus().name(), user.getRole().name(),
+            user.getCreatedAt(), user.getApprovedAt(), postCount, commentCount
+        );
     }
 
     private Admin findCurrentAdmin() {

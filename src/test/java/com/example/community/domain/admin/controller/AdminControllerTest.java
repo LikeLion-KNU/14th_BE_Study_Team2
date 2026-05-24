@@ -1,6 +1,7 @@
 package com.example.community.domain.admin.controller;
 
 import com.example.community.domain.admin.dto.response.PendingUserResponse;
+import com.example.community.domain.admin.dto.response.UserDetailResponse;
 import com.example.community.domain.admin.service.AdminService;
 import com.example.community.domain.user.repository.ActiveSessionRepository;
 import com.example.community.domain.user.repository.UserRepository;
@@ -54,5 +55,17 @@ class AdminControllerTest {
     void getPendingUsers_withoutAuth_returns401() throws Exception {
         mockMvc.perform(get("/api/admin/users/pending"))
             .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
+    void getUserDetail_returns200() throws Exception {
+        UserDetailResponse response = new UserDetailResponse(1L, 20201234L, "닉네임1", "홍길동", "경북대학교", "PENDING", "USER", null, null, 3L, 5L);
+        when(adminService.getUserDetail(1L)).thenReturn(response);
+
+        mockMvc.perform(get("/api/admin/users/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.name").value("홍길동"))
+            .andExpect(jsonPath("$.data.postCount").value(3));
     }
 }

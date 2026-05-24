@@ -1,6 +1,7 @@
 package com.example.community.domain.admin.service;
 
 import com.example.community.domain.admin.dto.response.PendingUserResponse;
+import com.example.community.domain.admin.dto.response.UserDetailResponse;
 import com.example.community.domain.post.repository.CommentRepository;
 import com.example.community.domain.post.repository.PostRepository;
 import com.example.community.domain.user.entity.User;
@@ -25,6 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,5 +64,27 @@ class AdminServiceTest {
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getName()).isEqualTo("홍길동");
         assertThat(result.getContent().get(0).getStudentId()).isEqualTo(20201234L);
+    }
+
+    @Test
+    void getUserDetail_returnsUserDetailWithCounts() {
+        Long userId = 1L;
+        when(userRepository.findById(userId)).thenReturn(java.util.Optional.of(pendingUser));
+        when(postRepository.countByUser_IdAndStatusNot(userId, com.example.community.domain.post.enums.PostStatus.DELETED)).thenReturn(3L);
+        when(commentRepository.countByUser_IdAndStatusNot(userId, com.example.community.domain.post.enums.CommentStatus.DELETED)).thenReturn(5L);
+
+        UserDetailResponse result = adminService.getUserDetail(userId);
+
+        assertThat(result.getName()).isEqualTo("홍길동");
+        assertThat(result.getPostCount()).isEqualTo(3L);
+        assertThat(result.getCommentCount()).isEqualTo(5L);
+    }
+
+    @Test
+    void getUserDetail_userNotFound_throwsCustomException() {
+        when(userRepository.findById(99L)).thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> adminService.getUserDetail(99L))
+            .isInstanceOf(com.example.community.common.exception.CustomException.class);
     }
 }
