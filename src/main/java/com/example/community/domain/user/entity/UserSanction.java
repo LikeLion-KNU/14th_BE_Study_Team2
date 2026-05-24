@@ -45,4 +45,16 @@ public class UserSanction {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public static UserSanction of(User user, Admin admin, SanctionType type,
+                                   String reason, LocalDateTime startAt, LocalDateTime endAt) {
+        UserSanction sanction = new UserSanction();
+        sanction.user = user;
+        sanction.admin = admin;
+        sanction.type = type;
+        sanction.reason = reason;
+        sanction.startAt = startAt;
+        sanction.endAt = endAt;
+        return sanction;
+    }
 }
