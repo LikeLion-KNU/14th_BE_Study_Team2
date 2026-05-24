@@ -2,10 +2,12 @@ package com.example.community.domain.admin.controller;
 
 import com.example.community.common.dto.ApiResponse;
 import com.example.community.domain.admin.dto.request.RejectRequest;
+import com.example.community.domain.admin.dto.request.BanRequest;
 import com.example.community.domain.admin.dto.response.PendingUserResponse;
 import com.example.community.domain.admin.dto.response.UserDetailResponse;
 import com.example.community.domain.admin.dto.response.ApproveResponse;
 import com.example.community.domain.admin.dto.response.RejectResponse;
+import com.example.community.domain.admin.dto.response.BanResponse;
 import com.example.community.domain.admin.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -55,5 +57,12 @@ public class AdminController {
     public ResponseEntity<Void> deleteComment(@PathVariable Long commentId) {
         adminService.deleteComment(commentId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/users/{userId}/ban")
+    public ResponseEntity<ApiResponse<BanResponse>> banUser(
+        @PathVariable Long userId,
+        @RequestBody @Valid BanRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(adminService.banUser(userId, request.getReason())));
     }
 }

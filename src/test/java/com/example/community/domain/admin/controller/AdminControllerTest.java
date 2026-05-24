@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import com.example.community.domain.admin.dto.response.ApproveResponse;
 import com.example.community.domain.admin.dto.response.RejectResponse;
+import com.example.community.domain.admin.dto.response.BanResponse;
 
 @WebMvcTest(AdminController.class)
 @Import({SecurityConfig.class, JwtAuthenticationFilter.class, JwtAuthenticationEntryPoint.class, JwtAccessDeniedHandler.class})
@@ -109,5 +110,19 @@ class AdminControllerTest {
     void deleteComment_returns204() throws Exception {
         mockMvc.perform(delete("/api/admin/comments/1"))
             .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
+    void banUser_returns200() throws Exception {
+        java.time.LocalDateTime startAt = java.time.LocalDateTime.now();
+        BanResponse response = new BanResponse(1L, "BANNED", startAt, startAt.plusDays(7));
+        when(adminService.banUser(eq(1L), anyString())).thenReturn(response);
+
+        mockMvc.perform(patch("/api/admin/users/1/ban")
+                .contentType("application/json")
+                .content("{\"reason\":\"규정 위반\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("BANNED"));
     }
 }

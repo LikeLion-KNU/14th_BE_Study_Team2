@@ -6,6 +6,7 @@ import com.example.community.domain.admin.dto.response.PendingUserResponse;
 import com.example.community.domain.admin.dto.response.UserDetailResponse;
 import com.example.community.domain.admin.dto.response.ApproveResponse;
 import com.example.community.domain.admin.dto.response.RejectResponse;
+import com.example.community.domain.admin.dto.response.BanResponse;
 import com.example.community.domain.post.entity.Comment;
 import com.example.community.domain.post.entity.Post;
 import com.example.community.domain.post.enums.CommentStatus;
@@ -15,6 +16,8 @@ import com.example.community.domain.post.repository.PostRepository;
 import com.example.community.domain.user.entity.Admin;
 import com.example.community.domain.user.entity.User;
 import com.example.community.domain.user.entity.UserRejection;
+import com.example.community.domain.user.entity.UserSanction;
+import com.example.community.domain.user.enums.SanctionType;
 import com.example.community.domain.user.repository.AdminRepository;
 import com.example.community.domain.user.repository.UserRejectionRepository;
 import com.example.community.domain.user.repository.UserSanctionRepository;
@@ -26,6 +29,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -86,6 +91,18 @@ public class AdminService {
         Comment comment = commentRepository.findById(commentId)
             .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
         comment.softDelete();
+    }
+
+    @Transactional
+    public BanResponse banUser(Long userId, String reason) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Admin admin = findCurrentAdmin();
+        LocalDateTime startAt = LocalDateTime.now();
+        LocalDateTime endAt = startAt.plusDays(7);
+        user.ban();
+        userSanctionRepository.save(UserSanction.of(user, admin, SanctionType.BAN, reason, startAt, endAt));
+        return new BanResponse(user.getId(), user.getStatus().name(), startAt, endAt);
     }
 
     private Admin findCurrentAdmin() {
