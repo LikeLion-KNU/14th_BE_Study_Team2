@@ -111,4 +111,20 @@ public class User extends BaseTimeEntity {
         this.status = UserStatus.APPROVED;
         this.approvedAt = LocalDateTime.now();
     }
+
+    // 로컬 테스트용 — ADMIN 권한 유저 직접 생성
+    public static User createAdminUser(Long studentId, String hashedPw, String name,
+                                       String school, String nickname, String certificateUrl) {
+        User user = new User();
+        user.studentId = studentId;
+        user.hashedPw = hashedPw;
+        user.name = name;
+        user.school = school;
+        user.nickname = nickname;
+        user.certificateUrl = certificateUrl;
+        user.status = UserStatus.APPROVED;
+        user.role = UserRole.ADMIN;
+        user.approvedAt = LocalDateTime.now();
+        return user;
+    }
 }
