@@ -116,7 +116,7 @@ class AuthServiceSignupTest {
 
         assertThatThrownBy(() -> authService.signup(request))
                 .isInstanceOf(AuthException.class)
-                .hasMessage("비밀번호 형식 오류");
+                .hasMessage("비밀번호 형식 오류 (영문 포함, 숫자 포함, 8자 이상 20자 이하");
 
         assertThat(userRepository.existsByStudentId(20221003L)).isFalse();
     }
