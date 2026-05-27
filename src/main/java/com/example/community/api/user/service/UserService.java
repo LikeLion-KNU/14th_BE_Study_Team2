@@ -7,6 +7,8 @@ import com.example.community.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.community.global.exception.CustomException;
+import com.example.community.global.exception.ErrorCode;
 
 @Service // 스피링에게 비즈니스 로직을 처리하는거라고 알려줌
 @RequiredArgsConstructor //
@@ -24,7 +26,8 @@ public class UserService {
     // [기능 4] 닉네임 수정 시 중복 체크
     public void validateNickname(String nickname) {
         if (userRepository.existsByNickname(nickname)) {
-            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+            // 💡 수정됨: 일반 Exception 대신 CustomException과 전용 에러 코드 사용
+            throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
     }
 
@@ -58,6 +61,7 @@ public class UserService {
     // 없으면 에러 던지기 작업
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자를 찾을 수 없습니다. ID: " + userId));
+                // 💡 수정됨: RuntimeException 대신 CustomException과 전용 에러 코드 사용
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 }

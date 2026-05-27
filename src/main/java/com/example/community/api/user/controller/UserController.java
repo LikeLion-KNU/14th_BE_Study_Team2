@@ -4,6 +4,7 @@ import com.example.community.api.user.dto.MyPageResponse;
 import com.example.community.api.user.dto.UserUpdateRequest;
 import com.example.community.api.user.service.UserService;
 import com.example.community.security.util.SecurityUtil;
+import com.example.community.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,26 +22,26 @@ public class UserController {
     @GetMapping("/me")
     // 프론트엔트 요청 : GET 방식으로 http://서버주소/api/users/me 호출
     // 데이터 조회
-    public ResponseEntity<MyPageResponse> getMyPage(/* @AuthenticationPrincipal Long userId */) {
+    public ResponseEntity<ApiResponse<MyPageResponse>> getMyPage(/* @AuthenticationPrincipal Long userId */) {
         Long userId = SecurityUtil.getCurrentUserId(); // 💡 실제 구현 시에는 로그인된 유저 ID를 주입받아야 합니다.
-        return ResponseEntity.ok(userService.getMyPage(userId));
+        return ResponseEntity.ok(ApiResponse.success(userService.getMyPage(userId)));
     }
 
     // [기능 4, 5] 내 정보 수정 (닉네임 등)
     // 데이터 수정
     @PatchMapping("/me")
-    public ResponseEntity<String> updateMyInfo(@RequestBody UserUpdateRequest requestDto) {
+    public ResponseEntity<ApiResponse<String>> updateMyInfo(@RequestBody UserUpdateRequest requestDto) {
         Long userId = SecurityUtil.getCurrentUserId(); // 💡 로그인된 본인 ID만 전달됨 (자동 권한 체크)
         userService.updateUserInfo(userId, requestDto);
-        return ResponseEntity.ok("회원 정보가 성공적으로 수정되었습니다.");
+        return ResponseEntity.ok(ApiResponse.success("회원 정보가 성공적으로 수정되었습니다."));
     }
 
     // [기능 5] 회원 탈퇴
     // 데이터 삭제
     @DeleteMapping("/me")
-    public ResponseEntity<String> deleteMe() {
+    public ResponseEntity<ApiResponse<String>> deleteMe() {
         Long userId = SecurityUtil.getCurrentUserId(); // 로그인된 본인 ID만 전달됨 (자동 권한 체크)
         userService.deleteUser(userId);
-        return ResponseEntity.ok("회원 탈퇴가 완료되었습니다.");
+        return ResponseEntity.ok(ApiResponse.success("회원 탈퇴가 완료되었습니다."));
     }
 }
