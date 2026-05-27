@@ -29,4 +29,11 @@ public class NicknameAdjective { // 명사는 NicknameNoun
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public static NicknameAdjective create(String word) {
+        NicknameAdjective adjective = new NicknameAdjective();
+        adjective.word = word;
+        adjective.isActive = true;
+        return adjective;
+    }
 }
